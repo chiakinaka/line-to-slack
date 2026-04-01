@@ -1,4 +1,4 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const line = require('@line/bot-sdk');
 const { handleEvent } = require('./lineHandler');
@@ -11,12 +11,10 @@ const lineConfig = {
 };
 
 app.post('/webhook', line.middleware(lineConfig), (req, res) => {
+  // 全イベントに200を返す（退会防止）
+  res.status(200).end();
   Promise.all(req.body.events.map(handleEvent))
-    .then(() => res.status(200).end())
-    .catch((err) => {
-      console.error(err);
-      res.status(500).end();
-    });
+    .catch((err) => console.error(err));
 });
 
 app.get('/', (req, res) => res.send('LINE to Slack bot is running!'));

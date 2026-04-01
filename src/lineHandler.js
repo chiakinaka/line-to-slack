@@ -6,8 +6,10 @@ async function handleEvent(event) {
   const message = event.message.text;
   const source = event.source;
 
-  let senderInfo = '';
+  // メンション(@で始まる)のみ通知
+  if (!message.startsWith('@')) return;
 
+  let senderInfo = '';
   if (source.type === 'group') {
     senderInfo = `グループ (${source.groupId})`;
   } else if (source.type === 'room') {
@@ -16,8 +18,8 @@ async function handleEvent(event) {
     senderInfo = `個人チャット (${source.userId})`;
   }
 
-  const slackMessage = `📩 LINEメッセージ\n送信元: ${senderInfo}\nメッセージ: ${message}`;
+  const slackMessage = `📣 メンションされました！\n送信元: ${senderInfo}\nメッセージ: ${message}`;
   await sendToSlack(slackMessage);
 }
 
-module.exports = { handleEvent }; 
+module.exports = { handleEvent };

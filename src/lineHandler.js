@@ -26,12 +26,32 @@ async function handleEvent(event) {
   // メンションのみSlack通知
   if (message.startsWith('@')) {
     let senderInfo = '';
-    if (source.type === 'group') {
-      senderInfo = `グループ (${source.groupId})`;
-    } else if (source.type === 'room') {
-      senderInfo = `トークルーム (${source.roomId})`;
-    } else {
-      senderInfo = `個人チャット (${source.userId})`;
+
+    try {
+      if (source.type === 'group') {
+        // グループ名を取得
+        const groupSummary = await client.getGroupSummary(source.groupId);
+        const groupName = groupSummary.groupName;
+
+        // 送信者名を取得
+        const memberProfile = await client.getGroupMemberProfile(source.groupId, source.userId);
+        const memberName = memberProfile.displayName;
+
+        senderInfo = `${groupName}（${memberName}）`;
+
+      } else if (source.type === 'room') {
+        // トークルームは名前取得不可のためIDを使用
+        const memberProfile = await client.getRoomMemberProfile(source.roomId, source.userId);
+        const memberName = memberProfile.displayName;
+        senderInfo = `トークルーム（${memberName}）`;
+
+      } else {
+        // 個人チャットは名前取得不可
+        senderInfo = '個人チャット';
+      }
+    } catch (err) {
+      console.error('プロフィール取得エラー:', err);
+      senderInfo = source.groupId || source.roomId || source.userId || '不明';
     }
 
     const slackMessage = `📣 メンションされました！\n送信元: ${senderInfo}\nメッセージ: ${message}`;

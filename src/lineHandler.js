@@ -1,4 +1,4 @@
-const { sendToSlack } = require('./slackNotifier');
+const { sendToSlack, sendTranslationToThread } = require('./slackNotifier');
 const { translateMessage } = require('./translator');
 const line = require('@line/bot-sdk');
 
@@ -23,39 +23,38 @@ async function handleEvent(event) {
     });
   }
 
-  // メンションのみSlack通知
+  // メンションのみSlack通知（@を除いたメッセージを送信）
   if (message.startsWith('@')) {
-    let senderInfo = '';
+    let groupName = '不明';
+    let senderName = '不明';
 
     try {
       if (source.type === 'group') {
-        // グループ名を取得
         const groupSummary = await client.getGroupSummary(source.groupId);
-        const groupName = groupSummary.groupName;
-
-        // 送信者名を取得
+        groupName = groupSummary.groupName;
         const memberProfile = await client.getGroupMemberProfile(source.groupId, source.userId);
-        const memberName = memberProfile.displayName;
-
-        senderInfo = `${groupName}（${memberName}）`;
-
+        senderName = memberProfile.displayName;
       } else if (source.type === 'room') {
-        // トークルームは名前取得不可のためIDを使用
         const memberProfile = await client.getRoomMemberProfile(source.roomId, source.userId);
-        const memberName = memberProfile.displayName;
-        senderInfo = `トークルーム（${memberName}）`;
-
+        senderName = memberProfile.displayName;
+        groupName = 'トークルーム';
       } else {
-        // 個人チャットは名前取得不可
-        senderInfo = '個人チャット';
+        groupName = '個人チャット';
+        senderName = '';
       }
     } catch (err) {
       console.error('プロフィール取得エラー:', err);
-      senderInfo = source.groupId || source.roomId || source.userId || '不明';
     }
 
-    const slackMessage = `📣 メンションされました！\n送信元: ${senderInfo}\nメッセージ: ${message}`;
-    await sendToSlack(slackMessage);
+    // @以降のメンション部分を除いたメッセージ
+    const cleanMessage = message.replace(/^@\S+\s*/, '').trim() || message;
+
+    // Slackにメイン通知を送信
+    await sendToSlack({
+      groupName,
+      senderName,
+      message: cleanMessage,
+    });
   }
 }
 

@@ -13,7 +13,8 @@ async function handleEvent(event) {
   const source = event.source;
 
   // 翻訳を実行
-  const translated = await translateMessage(message);
+ const cleanMessageForTranslation = message.replace(/@\S+/g, '').trim();
+const translated = await translateMessage(cleanMessageForTranslation);
 
   // 翻訳結果をLINEに返信
   if (translated) {

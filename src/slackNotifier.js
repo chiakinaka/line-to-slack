@@ -3,51 +3,57 @@ const axios = require('axios');
 const WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
 
 // メイン通知を送信してthread_tsを返す
-async function sendToSlack({ groupName, senderName, message }) {
+async function sendToSlack({ groupName, senderName, message, translated }) {
   if (!WEBHOOK_URL) {
     console.error('SLACK_WEBHOOK_URL が設定されていません');
     return null;
   }
 
-  const body = {
-    blocks: [
-      {
-        type: 'divider',
+  const blocks = [
+    { type: 'divider' },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `📣 *Mentioned!*`,
       },
-      {
-        type: 'section',
-        text: {
+    },
+    {
+      type: 'section',
+      fields: [
+        {
           type: 'mrkdwn',
-          text: `📣 *メンションされました！*`,
+          text: `👥 *Group:*\n*${groupName}*`,
         },
-      },
-      {
-        type: 'section',
-        fields: [
-          {
-            type: 'mrkdwn',
-            text: `👥 *グループ:*\n*${groupName}*`,
-          },
-          {
-            type: 'mrkdwn',
-            text: `👤 *送信者:*\n${senderName}`,
-          },
-        ],
-      },
-      {
-        type: 'section',
-        text: {
+        {
           type: 'mrkdwn',
-          text: `💬 *メッセージ:*\n${message}`,
+          text: `👤 *From:*\n${senderName}`,
         },
+      ],
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `💬 *Message:*\n${message}`,
       },
-      {
-        type: 'divider',
-      },
-    ],
-  };
+    },
+  ];
 
-  const response = await axios.post(WEBHOOK_URL, body);
+  // 翻訳がある場合は追加
+  if (translated) {
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `🌐 *Translation:*\n${translated}`,
+      },
+    });
+  }
+
+  blocks.push({ type: 'divider' });
+
+  const response = await axios.post(WEBHOOK_URL, { blocks });
   return response;
 }
 

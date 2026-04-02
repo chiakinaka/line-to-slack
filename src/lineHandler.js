@@ -49,11 +49,12 @@ async function handleEvent(event) {
     // @以降のメンション部分を除いたメッセージ
     const cleanMessage = message.replace(/^@\S+\s*/, '').trim() || message;
 
-    // Slackにメイン通知を送信
+    // Slackにメイン通知を送信（翻訳も含む）
     await sendToSlack({
       groupName,
       senderName,
       message: cleanMessage,
+      translated,
     });
   }
 }

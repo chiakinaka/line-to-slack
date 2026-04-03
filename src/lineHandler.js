@@ -25,7 +25,7 @@ const translated = await translateMessage(cleanMessageForTranslation);
   }
 
   // メンションのみSlack通知（@を除いたメッセージを送信）
-  if (message.startsWith('@')) {
+ if (message.includes('@nomino')) {
     let groupName = '不明';
     let senderName = '不明';
 
